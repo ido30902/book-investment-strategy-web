@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,14 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Custom theme colors
+				'investment-blue': '#1a56db',
+				'investment-blue-light': '#3b82f6',
+				'investment-blue-dark': '#1e40af',
+				'investment-green': '#10b981',
+				'investment-green-light': '#34d399',
+				'investment-green-dark': '#059669',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
