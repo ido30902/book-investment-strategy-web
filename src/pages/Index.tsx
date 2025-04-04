@@ -1,24 +1,44 @@
-
-import HeroSection from "@/components/HeroSection";
-import Header from "@/components/Header";
-import BooksSection from "@/components/BooksSection";
-import ComparisonSection from "@/components/ComparisonSection";
-import StockScreenerSection from "@/components/StockScreenerSection";
-import Footer from "@/components/Footer";
+import HeroSection from '@/components/HeroSection';
+import Header from '@/components/Header';
+import BooksSection from '@/components/BooksSection';
+import ComparisonSection from '@/components/ComparisonSection';
+import StockScreenerSection from '@/components/StockScreenerSection';
+import Footer from '@/components/Footer';
+import MobileAdPopup from '@/components/ads/MobileAdPopup';
+import DesktopSideAds from '@/components/ads/DesktopSideAds';
+import { useEffect, useState } from 'react';
 
 const Index = () => {
-  return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <main className="flex-grow">
-        <HeroSection />
-        <BooksSection />
-        <ComparisonSection />
-        <StockScreenerSection />
-      </main>
-      <Footer />
-    </div>
-  );
+	const [isMobile, setIsMobile] = useState(false);
+
+	useEffect(() => {
+		const checkIfMobile = () => {
+			setIsMobile(window.innerWidth <= 768);
+		};
+
+		// Check on initial render
+		checkIfMobile();
+
+		// Add event listener for window resize
+		window.addEventListener('resize', checkIfMobile);
+
+		// Clean up
+		return () => window.removeEventListener('resize', checkIfMobile);
+	}, []);
+
+	return (
+		<div className="min-h-screen flex flex-col">
+			<Header />
+			<main className="flex-grow relative">
+				{isMobile ? <MobileAdPopup /> : <DesktopSideAds />}
+				<HeroSection />
+				<BooksSection />
+				<ComparisonSection />
+				<StockScreenerSection />
+			</main>
+			<Footer />
+		</div>
+	);
 };
 
 export default Index;
