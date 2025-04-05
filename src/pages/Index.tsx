@@ -7,9 +7,26 @@ import Footer from '@/components/Footer';
 import MobileAdPopup from '@/components/ads/MobileAdPopup';
 import DesktopSideAds from '@/components/ads/DesktopSideAds';
 import { useEffect, useState } from 'react';
+import { getStocks, getTopMagicFormulaStocks } from '@/lib/api';
 
 const Index = () => {
 	const [isMobile, setIsMobile] = useState(false);
+	const [stocks, setStocks] = useState([]);
+
+	useEffect(() => {
+		const fetchStocks = async () => {
+			try {
+				const response = await getTopMagicFormulaStocks(50);
+				setStocks(response.data);
+			} catch (error) {
+				console.error('Error fetching stocks:', error);
+			}
+		};
+
+		fetchStocks();
+	}, []);
+
+	console.log(stocks);
 
 	useEffect(() => {
 		const checkIfMobile = () => {
@@ -34,7 +51,7 @@ const Index = () => {
 				<HeroSection />
 				<BooksSection />
 				<ComparisonSection />
-				<StockScreenerSection />
+				<StockScreenerSection stocks={stocks} />
 			</main>
 			<Footer />
 		</div>
