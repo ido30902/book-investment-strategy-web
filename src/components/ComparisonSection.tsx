@@ -342,6 +342,7 @@ const ComparisonSection = () => {
 											}
 											return `$${value}`;
 										}}
+										scale={'linear'}
 									/>
 									<Tooltip
 										formatter={(value: number) => {
@@ -379,6 +380,10 @@ const ComparisonSection = () => {
 										labelFormatter={(label) =>
 											`Year: ${label}`
 										}
+										contentStyle={{
+											fontWeight: 'bold',
+											textAlign: 'center'
+										}}
 									/>
 									<Legend />
 									<Line

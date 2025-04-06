@@ -87,6 +87,7 @@ const StockScreenerSection = ({ stocks }: { stocks: Stock[] }) => {
 
 	// Helper to format percentage
 	const formatPercentage = (value: number) => {
+		value *= 100;
 		return `${value.toFixed(2)}%`;
 	};
 
