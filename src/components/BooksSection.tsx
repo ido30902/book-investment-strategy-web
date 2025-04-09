@@ -29,10 +29,6 @@ const BooksSection = () => {
 	return (
 		<section id="books" className="py-20 bg-gray-50">
 			<div className="container mx-auto px-4">
-				<h2 className="text-3xl md:text-4xl font-bold text-investment-blue mb-12 text-center">
-					Investment Strategy Books
-				</h2>
-
 				<div className="grid md:grid-cols-2 gap-10">
 					{books.map((book) => (
 						<Card
@@ -77,7 +73,7 @@ const BooksSection = () => {
 									</div>
 								</div>
 							</CardContent>
-							<CardFooter className="bg-gray-100 p-4">
+							<CardFooter className="bg-gray-100 p-4 ">
 								<a
 									href={book.amazonLink}
 									target="_blank"

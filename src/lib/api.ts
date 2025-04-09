@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const url = 'http://192.168.1.35:4000/api/stocks';
+const url = 'http://192.168.20.116:4000/api/stocks';
 const headers = {
 	'Content-Type': 'application/json',
 	'Access-Control-Allow-Origin': '*',
@@ -9,6 +9,16 @@ const headers = {
 export const getStocks = async () => {
 	try {
 		const response = await axios.get(url, { headers });
+		return response.data;
+	} catch (error) {
+		console.error('Error fetching stocks:', error);
+		throw error;
+	}
+};
+
+export const getStocksWithLimit = async (limit: number) => {
+	try {
+		const response = await axios.get(`${url}?limit=${limit}`, { headers });
 		return response.data;
 	} catch (error) {
 		console.error('Error fetching stocks:', error);

@@ -26,54 +26,183 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
 import { Stock } from '@/utils/stockData';
-import { ArrowUpDown } from 'lucide-react';
+import { ArrowUpDown, ChevronDown, ChevronUp, ArrowUp, ArrowDown } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
+type SortDirection = 'ascending' | 'descending' | 'default';
+type SortConfig = {
+	key: string;
+	direction: SortDirection;
+};
+
+// New market cap slider constants and utilities
+const MARKET_CAP_MIN = 0.05; // $50M
+const MARKET_CAP_MAX = 5000; // $5T
+
+const formatMarketCap = (value: number): string => {
+	if (value >= 1000) {
+		return `$${(value / 1000).toFixed(1)}T`;
+	} else if (value >= 1) {
+		return `$${value.toFixed(1)}B`;
+	} else {
+		return `$${(value * 1000).toFixed(0)}M`;
+	}
+};
+
+const logToLinear = (value: number): number => {
+	return Math.pow(10, value);
+};
+
+const linearToLog = (value: number): number => {
+	return Math.log10(value);
+};
+
+const MarketCapSlider = ({ 
+	value, 
+	onChange, 
+	className 
+}: { 
+	value: [number, number]; 
+	onChange: (value: [number, number]) => void;
+	className?: string;
+}) => {
+	const [minValue, maxValue] = value;
+	
+	const handleChange = (newValue: number[]) => {
+		onChange([logToLinear(newValue[0]), logToLinear(newValue[1])]);
+	};
+
+	return (
+		<div className={`space-y-4 ${className}`}>
+			<div className="flex justify-between items-center">
+				<span className="text-sm font-medium">Market Cap Range</span>
+				<div className="flex items-center gap-2">
+					<span className="text-sm">{formatMarketCap(minValue)}</span>
+					<span className="text-sm">to</span>
+					<span className="text-sm">{formatMarketCap(maxValue)}</span>
+				</div>
+			</div>
+			<div className="relative">
+				<Slider
+					value={[linearToLog(minValue), linearToLog(maxValue)]}
+					min={linearToLog(MARKET_CAP_MIN)}
+					max={linearToLog(MARKET_CAP_MAX)}
+					step={0.1}
+					onValueChange={handleChange}
+					className="w-full"
+				/>
+			</div>
+		</div>
+	);
+};
+
 const StockScreenerSection = ({ stocks }: { stocks: Stock[] }) => {
-	const [magicFormulaSortConfig, setMagicFormulaSortConfig] = useState({
-		key: '',
-		direction: '',
+	const [magicFormulaSortConfig, setMagicFormulaSortConfig] = useState<SortConfig>({
+		key: 'magic_formula_rank',
+		direction: 'ascending',
 	});
-	const [grahamSortConfig, setGrahamSortConfig] = useState({
-		key: '',
-		direction: '',
+	const [grahamSortConfig, setGrahamSortConfig] = useState<SortConfig>({
+		key: 'magic_formula_rank',
+		direction: 'ascending',
 	});
 	const [magicFormulaFilters, setMagicFormulaFilters] = useState({
-		marketCapMin: 50,
-		marketCapMax: 1000,
+		marketCapMin: MARKET_CAP_MIN,
+		marketCapMax: MARKET_CAP_MAX,
 		stockCount: 20,
 	});
 	const [grahamFilters, setGrahamFilters] = useState({
-		marketCapMin: 50,
-		marketCapMax: 1000,
+		marketCapMin: MARKET_CAP_MIN,
+		marketCapMax: MARKET_CAP_MAX,
 		stockCount: 20,
 	});
+	const [expandedMagicFormulaRows, setExpandedMagicFormulaRows] = useState<Set<string>>(new Set());
+	const [expandedGrahamRows, setExpandedGrahamRows] = useState<Set<string>>(new Set());
 
-	// Sort function for tables
+	const getNextSortDirection = (currentDirection: SortDirection): SortDirection => {
+		switch (currentDirection) {
+			case 'default':
+				return 'descending';
+			case 'descending':
+				return 'ascending';
+			case 'ascending':
+				return 'default';
+		}
+	};
+
 	const requestSort = (key: string, tabName: string) => {
 		if (tabName === 'magic-formula') {
-			setMagicFormulaSortConfig((prevConfig) => {
-				if (prevConfig.key === key) {
-					const direction =
-						prevConfig.direction === 'ascending'
-							? 'descending'
-							: 'ascending';
-					return { key, direction };
-				}
-				return { key, direction: 'ascending' };
-			});
+			setMagicFormulaSortConfig(prevConfig => ({
+				key,
+				direction: prevConfig.key === key ? getNextSortDirection(prevConfig.direction) : 'descending'
+			}));
 		} else {
-			setGrahamSortConfig((prevConfig) => {
-				if (prevConfig.key === key) {
-					const direction =
-						prevConfig.direction === 'ascending'
-							? 'descending'
-							: 'ascending';
-					return { key, direction };
-				}
-				return { key, direction: 'ascending' };
-			});
+			setGrahamSortConfig(prevConfig => ({
+				key,
+				direction: prevConfig.key === key ? getNextSortDirection(prevConfig.direction) : 'descending'
+			}));
 		}
+	};
+
+	const getSortIcon = (key: string, config: SortConfig) => {
+		if (config.key !== key) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />;
+		switch (config.direction) {
+			case 'ascending':
+				return <ArrowUp className="ml-2 h-4 w-4" />;
+			case 'descending':
+				return <ArrowDown className="ml-2 h-4 w-4" />;
+			default:
+				return <ArrowUpDown className="ml-2 h-4 w-4" />;
+		}
+	};
+
+	const sortStocks = (stocks: Stock[], config: SortConfig) => {
+		if (config.direction === 'default') {
+			return [...stocks].sort((a, b) => a.magic_formula_props.magic_formula_rank - b.magic_formula_props.magic_formula_rank);
+		}
+
+		const sorted = [...stocks].sort((a, b) => {
+			let aValue: any;
+			let bValue: any;
+
+			switch (config.key) {
+				case 'marketCap':
+					aValue = a.marketCap;
+					bValue = b.marketCap;
+					break;
+				case 'returnOnCapital':
+					aValue = a.magic_formula_props.roa;
+					bValue = b.magic_formula_props.roa;
+					break;
+				case 'pe':
+					aValue = a.pe;
+					bValue = b.pe;
+					break;
+				case 'book_value':
+					aValue = a.graham_props.book_value;
+					bValue = b.graham_props.book_value;
+					break;
+				case 'current_ratio':
+					aValue = a.graham_props.current_ratio;
+					bValue = b.graham_props.current_ratio;
+					break;
+				case 'debt_to_equity':
+					aValue = a.graham_props.debt_to_equity;
+					bValue = b.graham_props.debt_to_equity;
+					break;
+				case 'magic_formula_rank':
+					aValue = a.magic_formula_props.magic_formula_rank;
+					bValue = b.magic_formula_props.magic_formula_rank;
+					break;
+				default:
+					return 0;
+			}
+
+			if (aValue < bValue) return config.direction === 'ascending' ? -1 : 1;
+			if (aValue > bValue) return config.direction === 'ascending' ? 1 : -1;
+			return 0;
+		});
+
+		return sorted;
 	};
 
 	// Helper to format currency
@@ -89,6 +218,47 @@ const StockScreenerSection = ({ stocks }: { stocks: Stock[] }) => {
 	const formatPercentage = (value: number) => {
 		value *= 100;
 		return `${value.toFixed(2)}%`;
+	};
+
+	const toggleRow = (symbol: string, tabName: string) => {
+		if (tabName === 'magic-formula') {
+			setExpandedMagicFormulaRows(prev => {
+				const newSet = new Set(prev);
+				if (newSet.has(symbol)) {
+					newSet.delete(symbol);
+				} else {
+					newSet.add(symbol);
+				}
+				return newSet;
+			});
+		} else {
+			setExpandedGrahamRows(prev => {
+				const newSet = new Set(prev);
+				if (newSet.has(symbol)) {
+					newSet.delete(symbol);
+				} else {
+					newSet.add(symbol);
+				}
+				return newSet;
+			});
+		}
+	};
+
+	// Filter stocks based on market cap and limit count
+	const getFilteredStocks = (tabName: string) => {
+		const filters = tabName === 'magic-formula' ? magicFormulaFilters : grahamFilters;
+		const sortConfig = tabName === 'magic-formula' ? magicFormulaSortConfig : grahamSortConfig;
+		
+		// Convert market cap filters to actual values (they're in billions)
+		const minMarketCap = filters.marketCapMin * 1000000000;
+		const maxMarketCap = filters.marketCapMax * 1000000000;
+
+		return sortStocks(
+			stocks
+				.filter(stock => stock.marketCap >= minMarketCap && stock.marketCap <= maxMarketCap)
+				.slice(0, filters.stockCount),
+			sortConfig
+		);
 	};
 
 	return (
@@ -139,85 +309,14 @@ const StockScreenerSection = ({ stocks }: { stocks: Stock[] }) => {
 												</DialogTitle>
 											</DialogHeader>
 											<div className="space-y-6 py-4">
-												<div className="space-y-2">
-													<h4 className="font-medium">
-														Market Cap Range
-														(Billions $)
-													</h4>
-													<div className="flex items-center space-x-4">
-														<Slider
-															value={[
-																magicFormulaFilters.marketCapMin,
-																magicFormulaFilters.marketCapMax,
-															]}
-															min={1}
-															max={2000}
-															step={10}
-															onValueChange={(
-																value
-															) =>
-																setMagicFormulaFilters(
-																	{
-																		...magicFormulaFilters,
-																		marketCapMin:
-																			value[0],
-																		marketCapMax:
-																			value[1],
-																	}
-																)
-															}
-															className="flex-1"
-														/>
-													</div>
-													<div className="flex items-center justify-between mt-2">
-														<Input
-															type="number"
-															value={
-																magicFormulaFilters.marketCapMin
-															}
-															onChange={(e) =>
-																setMagicFormulaFilters(
-																	{
-																		...magicFormulaFilters,
-																		marketCapMin:
-																			Number(
-																				e
-																					.target
-																					.value
-																			),
-																	}
-																)
-															}
-															className="w-24"
-															min={1}
-														/>
-														<span className="mx-2">
-															to
-														</span>
-														<Input
-															type="number"
-															value={
-																magicFormulaFilters.marketCapMax
-															}
-															onChange={(e) =>
-																setMagicFormulaFilters(
-																	{
-																		...magicFormulaFilters,
-																		marketCapMax:
-																			Number(
-																				e
-																					.target
-																					.value
-																			),
-																	}
-																)
-															}
-															className="w-24"
-															max={2000}
-														/>
-													</div>
-												</div>
-
+												<MarketCapSlider
+													value={[magicFormulaFilters.marketCapMin, magicFormulaFilters.marketCapMax]}
+													onChange={(value) => setMagicFormulaFilters(prev => ({
+														...prev,
+														marketCapMin: value[0],
+														marketCapMax: value[1],
+													}))}
+												/>
 												<div className="space-y-2">
 													<h4 className="font-medium">
 														Number of Stocks to
@@ -288,121 +387,89 @@ const StockScreenerSection = ({ stocks }: { stocks: Stock[] }) => {
 													<TableHead className="text-center">
 														Sector
 													</TableHead>
-
 													<TableHead
 														className="text-center cursor-pointer"
-														onClick={() =>
-															requestSort(
-																'marketCap',
-																'magic-formula'
-															)
-														}>
+														onClick={() => requestSort('marketCap', 'magic-formula')}
+													>
 														<div className="flex justify-center items-center">
 															Market Cap
-															<ArrowUpDown className="ml-2 h-4 w-4" />
+															{getSortIcon('marketCap', magicFormulaSortConfig)}
 														</div>
 													</TableHead>
 													<TableHead
 														className="text-center cursor-pointer"
-														onClick={() =>
-															requestSort(
-																'returnOnCapital',
-																'magic-formula'
-															)
-														}>
+														onClick={() => requestSort('returnOnCapital', 'magic-formula')}
+													>
 														<div className="flex justify-center items-center">
 															ROA
-															<ArrowUpDown className="ml-2 h-4 w-4" />
+															{getSortIcon('returnOnCapital', magicFormulaSortConfig)}
 														</div>
 													</TableHead>
 													<TableHead
 														className="text-center cursor-pointer"
-														onClick={() =>
-															requestSort(
-																'returnOnCapital',
-																'magic-formula'
-															)
-														}>
+														onClick={() => requestSort('pe', 'magic-formula')}
+													>
 														<div className="flex justify-center items-center">
-															PE
-															<ArrowUpDown className="ml-2 h-4 w-4" />
+															P/E
+															{getSortIcon('pe', magicFormulaSortConfig)}
 														</div>
 													</TableHead>
 												</TableRow>
 											</TableHeader>
 											<TableBody>
-												{stocks.map((stock) => (
-													<TableRow
-														key={
-															stock
-																.magic_formula_props
-																.magic_formula_rank
-														}>
-														<TableCell className="font-medium text-center">
-															<div className="flex items-center justify-center gap-2">
-																<div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold">
-																	<img
-																		src={
-																			stock.logo_url
-																		}
-																	/>
+												{getFilteredStocks('magic-formula').map((stock) => (
+													<>
+														<TableRow
+															key={stock.magic_formula_props.magic_formula_rank}
+															className="cursor-pointer hover:bg-gray-50"
+															onClick={() => toggleRow(stock.symbol, 'magic-formula')}
+														>
+															<TableCell className="font-medium text-center">
+																<div className="flex items-center justify-center gap-2">
+																	<div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold">
+																		<img src={stock.logo_url} />
+																	</div>
+																	{stock.symbol}
+																	{expandedMagicFormulaRows.has(stock.symbol) ? (
+																		<ChevronUp className="h-4 w-4" />
+																	) : (
+																		<ChevronDown className="h-4 w-4" />
+																	)}
 																</div>
-																{stock.symbol}
-															</div>
-														</TableCell>
-														<TableCell className="text-center">
-															{stock.name}
-														</TableCell>
-														<TableCell className="text-center">
-															{stock.sector}
-														</TableCell>
-														<TableCell className="text-center">
-															{(() => {
-																const value =
-																	stock.marketCap;
-																if (
-																	value >=
-																	1000000000000
-																) {
-																	return `${(
-																		value /
-																		1000000000000
-																	).toFixed(
-																		1
-																	)}T$`;
-																} else if (
-																	value >=
-																	1000000000
-																) {
-																	return `${(
-																		value /
-																		1000000000
-																	).toFixed(
-																		1
-																	)}B$`;
-																} else {
-																	return `${(
-																		value /
-																		1000000
-																	).toFixed(
-																		1
-																	)}M$`;
-																}
-															})()}
-														</TableCell>
-														<TableCell className="text-center">
-															{formatPercentage(
-																stock
-																	.magic_formula_props
-																	.roa
-															)}
-														</TableCell>
-														<TableCell className="text-center">
-															{stock.pe.toFixed(
-																2
-															)}
-														</TableCell>
-													</TableRow>
+															</TableCell>
+															<TableCell className="text-center">
+																{stock.name}
+															</TableCell>
+															<TableCell className="text-center">
+																{stock.sector}
+															</TableCell>
+															<TableCell className="text-center">
+																{(() => {
+																	const value = stock.marketCap;
+																	if (value >= 1000000000000) {
+																		return `${(value / 1000000000000).toFixed(1)}T$`;
+																	} else if (value >= 1000000000) {
+																		return `${(value / 1000000000).toFixed(1)}B$`;
+																	} else {
+																		return `${(value / 1000000).toFixed(1)}M$`;
+																	}
+																})()}
+															</TableCell>
+															<TableCell className="text-center">
+																{formatPercentage(stock.magic_formula_props.roa)}
+															</TableCell>
+															<TableCell className="text-center">
+																{stock.pe.toFixed(2)}
+															</TableCell>
+														</TableRow>
+														{expandedMagicFormulaRows.has(stock.symbol) && (
+															<TableRow className="bg-gray-50">
+																<TableCell colSpan={6} className="p-4">
+																	<p className="text-sm text-gray-600">{stock.description}</p>
+																</TableCell>
+															</TableRow>
+														)}
+													</>
 												))}
 											</TableBody>
 										</Table>
@@ -443,85 +510,14 @@ const StockScreenerSection = ({ stocks }: { stocks: Stock[] }) => {
 												</DialogTitle>
 											</DialogHeader>
 											<div className="space-y-6 py-4">
-												<div className="space-y-2">
-													<h4 className="font-medium">
-														Market Cap Range
-														(Billions $)
-													</h4>
-													<div className="flex items-center space-x-4">
-														<Slider
-															value={[
-																grahamFilters.marketCapMin,
-																grahamFilters.marketCapMax,
-															]}
-															min={1}
-															max={2000}
-															step={10}
-															onValueChange={(
-																value
-															) =>
-																setGrahamFilters(
-																	{
-																		...grahamFilters,
-																		marketCapMin:
-																			value[0],
-																		marketCapMax:
-																			value[1],
-																	}
-																)
-															}
-															className="flex-1"
-														/>
-													</div>
-													<div className="flex items-center justify-between mt-2">
-														<Input
-															type="number"
-															value={
-																grahamFilters.marketCapMin
-															}
-															onChange={(e) =>
-																setGrahamFilters(
-																	{
-																		...grahamFilters,
-																		marketCapMin:
-																			Number(
-																				e
-																					.target
-																					.value
-																			),
-																	}
-																)
-															}
-															className="w-24"
-															min={1}
-														/>
-														<span className="mx-2">
-															to
-														</span>
-														<Input
-															type="number"
-															value={
-																grahamFilters.marketCapMax
-															}
-															onChange={(e) =>
-																setGrahamFilters(
-																	{
-																		...grahamFilters,
-																		marketCapMax:
-																			Number(
-																				e
-																					.target
-																					.value
-																			),
-																	}
-																)
-															}
-															className="w-24"
-															max={2000}
-														/>
-													</div>
-												</div>
-
+												<MarketCapSlider
+													value={[grahamFilters.marketCapMin, grahamFilters.marketCapMax]}
+													onChange={(value) => setGrahamFilters(prev => ({
+														...prev,
+														marketCapMin: value[0],
+														marketCapMax: value[1],
+													}))}
+												/>
 												<div className="space-y-2">
 													<h4 className="font-medium">
 														Number of Stocks to
@@ -594,117 +590,90 @@ const StockScreenerSection = ({ stocks }: { stocks: Stock[] }) => {
 													</TableHead>
 													<TableHead
 														className="text-center cursor-pointer"
-														onClick={() =>
-															requestSort(
-																'price',
-																'graham'
-															)
-														}>
-														<div className="flex justify-center items-center">
-															Price
-															<ArrowUpDown className="ml-2 h-4 w-4" />
-														</div>
-													</TableHead>
-													<TableHead
-														className="text-center cursor-pointer"
-														onClick={() =>
-															requestSort(
-																'peRatio',
-																'graham'
-															)
-														}>
+														onClick={() => requestSort('pe', 'graham')}
+													>
 														<div className="flex justify-center items-center">
 															P/E
-															<ArrowUpDown className="ml-2 h-4 w-4" />
+															{getSortIcon('pe', grahamSortConfig)}
 														</div>
 													</TableHead>
 													<TableHead
 														className="text-center cursor-pointer"
-														onClick={() =>
-															requestSort(
-																'pbRatio',
-																'graham'
-															)
-														}>
+														onClick={() => requestSort('book_value', 'graham')}
+													>
 														<div className="flex justify-center items-center">
 															P/B
-															<ArrowUpDown className="ml-2 h-4 w-4" />
+															{getSortIcon('book_value', grahamSortConfig)}
 														</div>
 													</TableHead>
 													<TableHead
 														className="text-center cursor-pointer"
-														onClick={() =>
-															requestSort(
-																'currentRatio',
-																'graham'
-															)
-														}>
+														onClick={() => requestSort('current_ratio', 'graham')}
+													>
 														<div className="flex justify-center items-center">
 															Current Ratio
-															<ArrowUpDown className="ml-2 h-4 w-4" />
+															{getSortIcon('current_ratio', grahamSortConfig)}
 														</div>
 													</TableHead>
 													<TableHead
 														className="text-center cursor-pointer"
-														onClick={() =>
-															requestSort(
-																'debtToEquity',
-																'graham'
-															)
-														}>
+														onClick={() => requestSort('debt_to_equity', 'graham')}
+													>
 														<div className="flex justify-center items-center">
 															Debt/Equity
-															<ArrowUpDown className="ml-2 h-4 w-4" />
+															{getSortIcon('debt_to_equity', grahamSortConfig)}
 														</div>
 													</TableHead>
 												</TableRow>
 											</TableHeader>
 											<TableBody>
-												{stocks.map((stock) => (
-													<TableRow
-														key={
-															stock.graham_props
-																.graham_rank
-														}>
-														<TableCell className="font-medium text-center">
-															<div className="flex items-center justify-center gap-2">
-																<div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold">
-																	<img
-																		src={
-																			stock.logo_url
-																		}
-																	/>
+												{getFilteredStocks('graham').map((stock) => (
+													<>
+														<TableRow
+															key={stock.graham_props.graham_rank}
+															className="cursor-pointer hover:bg-gray-50"
+															onClick={() => toggleRow(stock.symbol, 'graham')}
+														>
+															<TableCell className="font-medium text-center">
+																<div className="flex items-center justify-center gap-2">
+																	<div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold">
+																		<img src={stock.logo_url} />
+																	</div>
+																	{stock.symbol}
+																	{expandedGrahamRows.has(stock.symbol) ? (
+																		<ChevronUp className="h-4 w-4" />
+																	) : (
+																		<ChevronDown className="h-4 w-4" />
+																	)}
 																</div>
-																{stock.symbol}
-															</div>
-														</TableCell>
-														<TableCell className="text-center">
-															{stock.name}
-														</TableCell>
-														<TableCell className="text-center">
-															{stock.sector}
-														</TableCell>
-														<TableCell className="text-center">
-															{stock.pe.toFixed(
-																2
-															)}
-														</TableCell>
-														<TableCell className="text-center">
-															{stock.graham_props.book_value.toFixed(
-																2
-															)}
-														</TableCell>
-														<TableCell className="text-center">
-															{stock.graham_props.current_ratio.toFixed(
-																2
-															)}
-														</TableCell>
-														<TableCell className="text-center">
-															{stock.graham_props.debt_to_equity.toFixed(
-																2
-															)}
-														</TableCell>
-													</TableRow>
+															</TableCell>
+															<TableCell className="text-center">
+																{stock.name}
+															</TableCell>
+															<TableCell className="text-center">
+																{stock.sector}
+															</TableCell>
+															<TableCell className="text-center">
+																{stock.pe.toFixed(2)}
+															</TableCell>
+															<TableCell className="text-center">
+																{stock.graham_props.book_value.toFixed(2)}
+															</TableCell>
+															<TableCell className="text-center">
+																{stock.graham_props.current_ratio.toFixed(2)}
+															</TableCell>
+															<TableCell className="text-center">
+																{stock.graham_props.debt_to_equity.toFixed(2)}
+															</TableCell>
+														</TableRow>
+														{expandedGrahamRows.has(stock.symbol) && (
+															<TableRow className="bg-gray-50">
+																<TableCell colSpan={7} className="p-4">
+																	<p className="text-sm text-gray-600">{stock.description}</p>
+																</TableCell>
+															</TableRow>
+														)}
+													</>
 												))}
 											</TableBody>
 										</Table>
