@@ -16,7 +16,7 @@ const Index = () => {
 	useEffect(() => {
 		const fetchStocks = async () => {
 			try {
-				const response = await getStocksWithLimit(500);
+				const response = await getStocksWithLimit(1500);
 				setStocks(response.data);
 			} catch (error) {
 				console.error('Error fetching stocks:', error);
