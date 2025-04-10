@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const url = 'http://192.168.20.116:4000/api/stocks';
+const url = 'http://192.168.1.35:4000/api/stocks';
 const headers = {
 	'Content-Type': 'application/json',
 	'Access-Control-Allow-Origin': '*',
