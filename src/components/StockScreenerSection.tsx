@@ -109,7 +109,7 @@ const StockScreenerSection = ({ stocks }: { stocks: Stock[] }) => {
 			direction: 'ascending',
 		});
 	const [grahamSortConfig, setGrahamSortConfig] = useState<SortConfig>({
-		key: 'magic_formula_rank',
+		key: 'graham_rank',
 		direction: 'ascending',
 	});
 	const [magicFormulaFilters, setMagicFormulaFilters] = useState({
@@ -175,15 +175,38 @@ const StockScreenerSection = ({ stocks }: { stocks: Stock[] }) => {
 		}
 	};
 
-	const sortStocks = (stocks: Stock[], config: SortConfig) => {
-		if (config.direction === 'default') {
-			return [...stocks].sort(
-				(a, b) =>
-					a.magic_formula_props.magic_formula_rank -
-					b.magic_formula_props.magic_formula_rank
-			);
+	const sortStocks = (
+		stocks: Stock[],
+		config: SortConfig,
+		tabName: string
+	) => {
+		// Default sorting (when direction is 'default' or when sorting by rank)
+		if (
+			config.direction === 'default' ||
+			(tabName === 'magic-formula' &&
+				config.key === 'magic_formula_rank') ||
+			(tabName === 'graham' && config.key === 'graham_rank')
+		) {
+			return [...stocks].sort((a, b) => {
+				// Primary sort by rank
+				let aRank, bRank;
+				if (tabName === 'magic-formula') {
+					aRank = a.magic_formula_props.magic_formula_rank;
+					bRank = b.magic_formula_props.magic_formula_rank;
+				} else {
+					aRank = a.graham_props.graham_rank;
+					bRank = b.graham_props.graham_rank;
+				}
+
+				// If ranks are equal, sort by ticker for consistency
+				if (aRank === bRank) {
+					return a.symbol.localeCompare(b.symbol);
+				}
+				return aRank - bRank;
+			});
 		}
 
+		// Secondary sorting for other columns
 		const sorted = [...stocks].sort((a, b) => {
 			let aValue: any;
 			let bValue: any;
@@ -194,12 +217,20 @@ const StockScreenerSection = ({ stocks }: { stocks: Stock[] }) => {
 					bValue = b.marketCap;
 					break;
 				case 'returnOnCapital':
-					aValue = a.magic_formula_props.roa;
-					bValue = b.magic_formula_props.roa;
+					aValue = a.magic_formula_props.roc;
+					bValue = b.magic_formula_props.roc;
+					break;
+				case 'earningsYield':
+					aValue = a.magic_formula_props.ey;
+					bValue = b.magic_formula_props.ey;
 					break;
 				case 'pe':
 					aValue = a.pe;
 					bValue = b.pe;
+					break;
+				case 'price':
+					aValue = a.price;
+					bValue = b.price;
 					break;
 				case 'book_value':
 					aValue = a.graham_props.book_value;
@@ -216,6 +247,20 @@ const StockScreenerSection = ({ stocks }: { stocks: Stock[] }) => {
 				case 'magic_formula_rank':
 					aValue = a.magic_formula_props.magic_formula_rank;
 					bValue = b.magic_formula_props.magic_formula_rank;
+					break;
+				case 'graham_rank':
+					aValue = a.graham_props.graham_rank;
+					bValue = b.graham_props.graham_rank;
+					break;
+				case 'graham_value':
+					aValue = a.graham_props.intrinsic_value;
+					bValue = b.graham_props.intrinsic_value;
+					break;
+				case 'price_to_graham_value':
+					const aRatio = a.price / a.graham_props.intrinsic_value;
+					const bRatio = b.price / b.graham_props.intrinsic_value;
+					aValue = aRatio;
+					bValue = bRatio;
 					break;
 				default:
 					return 0;
@@ -283,16 +328,38 @@ const StockScreenerSection = ({ stocks }: { stocks: Stock[] }) => {
 		const minMarketCap = filters.marketCapMin * 1000000000;
 		const maxMarketCap = filters.marketCapMax * 1000000000;
 
-		return sortStocks(
-			stocks
-				.filter(
-					(stock) =>
-						stock.marketCap >= minMarketCap &&
-						stock.marketCap <= maxMarketCap
-				)
-				.slice(0, filters.stockCount),
-			sortConfig
+		// First filter by market cap
+		const filteredStocks = stocks.filter(
+			(stock) =>
+				stock.marketCap >= minMarketCap &&
+				stock.marketCap <= maxMarketCap
 		);
+
+		// Sort the filtered stocks
+		const sortedStocks = sortStocks(filteredStocks, sortConfig, tabName);
+
+		// Return top N stocks
+		return sortedStocks.slice(0, filters.stockCount);
+	};
+
+	// Add helper for calculating and formatting the price to graham value
+	const calculateValuation = (stock: Stock) => {
+		const grahamValue = stock.graham_props.intrinsic_value;
+		const price = stock.price;
+		const valuationDiff =
+			Math.abs((price - grahamValue) / grahamValue) * 100;
+
+		if (grahamValue > price) {
+			return {
+				text: `Undervalued by ${valuationDiff.toFixed(1)}%`,
+				isUndervalued: true,
+			};
+		} else {
+			return {
+				text: `Overvalued by ${valuationDiff.toFixed(1)}%`,
+				isUndervalued: false,
+			};
+		}
 	};
 
 	return (
@@ -318,10 +385,10 @@ const StockScreenerSection = ({ stocks }: { stocks: Stock[] }) => {
 							<CardHeader>
 								<div className="flex flex-col md:flex-row md:items-center justify-between">
 									<div>
-										<CardTitle className="text-2xl">
+										<CardTitle className="text-2xl md:text-3xl md:text-left text-center">
 											Magic Formula Stock Screener
 										</CardTitle>
-										<CardDescription className="mt-2">
+										<CardDescription className="mt-2 text-center md:text-left">
 											Based on Joel Greenblatt's
 											investment strategy focusing on
 											return on capital and earnings
@@ -421,41 +488,31 @@ const StockScreenerSection = ({ stocks }: { stocks: Stock[] }) => {
 										<Table>
 											<TableHeader className="sticky top-0 bg-background">
 												<TableRow>
-													<TableHead className="w-20 text-center">
+													<TableHead className="w-[100px]">
 														Ticker
 													</TableHead>
-													<TableHead className="text-center">
-														Company
+													<TableHead>
+														Company name
 													</TableHead>
-													<TableHead className="text-center">
+													<TableHead>
 														Sector
 													</TableHead>
-													<TableHead
-														className="text-center cursor-pointer"
-														onClick={() =>
-															requestSort(
-																'marketCap',
-																'magic-formula'
-															)
-														}>
-														<div className="flex justify-center items-center">
-															Market Cap
-															{getSortIcon(
-																'marketCap',
-																magicFormulaSortConfig
-															)}
-														</div>
+													<TableHead className="text-right">
+														Market Cap
+													</TableHead>
+													<TableHead className="text-right">
+														Current Price
 													</TableHead>
 													<TableHead
-														className="text-center cursor-pointer"
+														className="text-right cursor-pointer"
 														onClick={() =>
 															requestSort(
 																'returnOnCapital',
 																'magic-formula'
 															)
 														}>
-														<div className="flex justify-center items-center">
-															ROA
+														<div className="flex items-center justify-end">
+															Return On Capital
 															{getSortIcon(
 																'returnOnCapital',
 																magicFormulaSortConfig
@@ -463,14 +520,30 @@ const StockScreenerSection = ({ stocks }: { stocks: Stock[] }) => {
 														</div>
 													</TableHead>
 													<TableHead
-														className="text-center cursor-pointer"
+														className="text-right cursor-pointer"
+														onClick={() =>
+															requestSort(
+																'earningsYield',
+																'magic-formula'
+															)
+														}>
+														<div className="flex items-center justify-end">
+															Earnings Yield
+															{getSortIcon(
+																'earningsYield',
+																magicFormulaSortConfig
+															)}
+														</div>
+													</TableHead>
+													<TableHead
+														className="text-right cursor-pointer"
 														onClick={() =>
 															requestSort(
 																'pe',
 																'magic-formula'
 															)
 														}>
-														<div className="flex justify-center items-center">
+														<div className="flex items-center justify-end">
 															P/E
 															{getSortIcon(
 																'pe',
@@ -484,110 +557,87 @@ const StockScreenerSection = ({ stocks }: { stocks: Stock[] }) => {
 												{getFilteredStocks(
 													'magic-formula'
 												).map((stock) => (
-													<>
-														<TableRow
-															key={
+													<TableRow
+														key={stock.symbol}>
+														<TableCell className="font-medium">
+															<div className="flex items-center gap-2">
+																<img
+																	src={
+																		stock.logo_url
+																	}
+																	alt={`${stock.symbol} logo`}
+																	className="w-6 h-6 rounded-full"
+																/>
+																{stock.symbol}
+															</div>
+														</TableCell>
+														<TableCell>
+															{stock.name}
+														</TableCell>
+														<TableCell>
+															{stock.sector}
+														</TableCell>
+														<TableCell className="text-right">
+															{(() => {
+																const value =
+																	stock.marketCap;
+																if (
+																	value >=
+																	1000000000000
+																) {
+																	return `${(
+																		value /
+																		1000000000000
+																	).toFixed(
+																		1
+																	)}T$`;
+																} else if (
+																	value >=
+																	1000000000
+																) {
+																	return `${(
+																		value /
+																		1000000000
+																	).toFixed(
+																		1
+																	)}B$`;
+																} else {
+																	return `${(
+																		value /
+																		1000000
+																	).toFixed(
+																		1
+																	)}M$`;
+																}
+															})()}
+														</TableCell>
+														<TableCell className="text-right">
+															{formatCurrency(
+																stock.price
+															)}
+														</TableCell>
+														<TableCell className="text-right">
+															{(
 																stock
 																	.magic_formula_props
-																	.magic_formula_rank
-															}
-															className="cursor-pointer hover:bg-gray-50"
-															onClick={() =>
-																toggleRow(
-																	stock.symbol,
-																	'magic-formula'
-																)
-															}>
-															<TableCell className="font-medium text-center">
-																<div className="flex items-center justify-center gap-2">
-																	<div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold">
-																		<img
-																			src={
-																				stock.logo_url
-																			}
-																		/>
-																	</div>
-																	{
-																		stock.symbol
-																	}
-																	{expandedMagicFormulaRows.has(
-																		stock.symbol
-																	) ? (
-																		<ChevronUp className="h-4 w-4" />
-																	) : (
-																		<ChevronDown className="h-4 w-4" />
-																	)}
-																</div>
-															</TableCell>
-															<TableCell className="text-center">
-																{stock.name}
-															</TableCell>
-															<TableCell className="text-center">
-																{stock.sector}
-															</TableCell>
-															<TableCell className="text-center">
-																{(() => {
-																	const value =
-																		stock.marketCap;
-																	if (
-																		value >=
-																		1000000000000
-																	) {
-																		return `${(
-																			value /
-																			1000000000000
-																		).toFixed(
-																			1
-																		)}T$`;
-																	} else if (
-																		value >=
-																		1000000000
-																	) {
-																		return `${(
-																			value /
-																			1000000000
-																		).toFixed(
-																			1
-																		)}B$`;
-																	} else {
-																		return `${(
-																			value /
-																			1000000
-																		).toFixed(
-																			1
-																		)}M$`;
-																	}
-																})()}
-															</TableCell>
-															<TableCell className="text-center">
-																{formatPercentage(
-																	stock
-																		.magic_formula_props
-																		.roa
-																)}
-															</TableCell>
-															<TableCell className="text-center">
-																{stock.pe.toFixed(
-																	2
-																)}
-															</TableCell>
-														</TableRow>
-														{expandedMagicFormulaRows.has(
-															stock.symbol
-														) && (
-															<TableRow className="bg-gray-50">
-																<TableCell
-																	colSpan={6}
-																	className="p-4">
-																	<p className="text-sm text-gray-600">
-																		{
-																			stock.description
-																		}
-																	</p>
-																</TableCell>
-															</TableRow>
-														)}
-													</>
+																	.roc * 100
+															).toFixed(2)}
+															%
+														</TableCell>
+														<TableCell className="text-right">
+															{(
+																stock
+																	.magic_formula_props
+																	.ey * 100
+															).toFixed(2)}
+															%
+														</TableCell>
+														<TableCell className="text-right">
+															{stock.pe.toFixed(
+																2
+															)}
+														</TableCell>
+													</TableRow>
 												))}
 											</TableBody>
 										</Table>
@@ -603,10 +653,10 @@ const StockScreenerSection = ({ stocks }: { stocks: Stock[] }) => {
 							<CardHeader>
 								<div className="flex flex-col md:flex-row md:items-center justify-between">
 									<div>
-										<CardTitle className="text-2xl">
+										<CardTitle className="text-2xl md:text-3xl md:text-left text-center">
 											Graham Strategy Stock Screener
 										</CardTitle>
-										<CardDescription className="mt-2">
+										<CardDescription className="mt-2 text-center md:text-left">
 											Based on Benjamin Graham's value
 											investing principles focusing on
 											financially sound companies at
@@ -710,10 +760,75 @@ const StockScreenerSection = ({ stocks }: { stocks: Stock[] }) => {
 														Ticker
 													</TableHead>
 													<TableHead className="text-center">
-														Company
+														Company name
 													</TableHead>
 													<TableHead className="text-center">
 														Sector
+													</TableHead>
+													<TableHead
+														className="text-center cursor-pointer"
+														onClick={() =>
+															requestSort(
+																'marketCap',
+																'graham'
+															)
+														}>
+														<div className="flex justify-center items-center">
+															Market Cap
+															{getSortIcon(
+																'marketCap',
+																grahamSortConfig
+															)}
+														</div>
+													</TableHead>
+													<TableHead
+														className="text-center cursor-pointer"
+														onClick={() =>
+															requestSort(
+																'price',
+																'graham'
+															)
+														}>
+														<div className="flex justify-center items-center">
+															Current Price
+															{getSortIcon(
+																'price',
+																grahamSortConfig
+															)}
+														</div>
+													</TableHead>
+													<TableHead
+														className="text-center cursor-pointer"
+														onClick={() =>
+															requestSort(
+																'graham_value',
+																'graham'
+															)
+														}>
+														<div className="flex justify-center items-center">
+															Graham Value
+															{getSortIcon(
+																'graham_value',
+																grahamSortConfig
+															)}
+														</div>
+													</TableHead>
+													<TableHead
+														className="text-center cursor-pointer"
+														onClick={() =>
+															requestSort(
+																'price_to_graham_value',
+																'graham'
+															)
+														}>
+														<div className="flex justify-center items-center">
+															Price to Graham
+															Value
+															{getSortIcon(
+																'price_to_graham_value',
+																grahamSortConfig
+															)}
+														</div>
 													</TableHead>
 													<TableHead
 														className="text-center cursor-pointer"
@@ -727,54 +842,6 @@ const StockScreenerSection = ({ stocks }: { stocks: Stock[] }) => {
 															P/E
 															{getSortIcon(
 																'pe',
-																grahamSortConfig
-															)}
-														</div>
-													</TableHead>
-													<TableHead
-														className="text-center cursor-pointer"
-														onClick={() =>
-															requestSort(
-																'book_value',
-																'graham'
-															)
-														}>
-														<div className="flex justify-center items-center">
-															P/B
-															{getSortIcon(
-																'book_value',
-																grahamSortConfig
-															)}
-														</div>
-													</TableHead>
-													<TableHead
-														className="text-center cursor-pointer"
-														onClick={() =>
-															requestSort(
-																'current_ratio',
-																'graham'
-															)
-														}>
-														<div className="flex justify-center items-center">
-															Current Ratio
-															{getSortIcon(
-																'current_ratio',
-																grahamSortConfig
-															)}
-														</div>
-													</TableHead>
-													<TableHead
-														className="text-center cursor-pointer"
-														onClick={() =>
-															requestSort(
-																'debt_to_equity',
-																'graham'
-															)
-														}>
-														<div className="flex justify-center items-center">
-															Debt/Equity
-															{getSortIcon(
-																'debt_to_equity',
 																grahamSortConfig
 															)}
 														</div>
@@ -803,7 +870,9 @@ const StockScreenerSection = ({ stocks }: { stocks: Stock[] }) => {
 																<div className="flex items-center justify-center gap-2">
 																	<div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold">
 																		<img
-																			src={`https://raw.githubusercontent.com/davidepalazzo/ticker-logos/refs/heads/main/ticker_icons/${stock.symbol}.png`}
+																			src={
+																				stock.logo_url
+																			}
 																		/>
 																	</div>
 																	{
@@ -825,22 +894,73 @@ const StockScreenerSection = ({ stocks }: { stocks: Stock[] }) => {
 																{stock.sector}
 															</TableCell>
 															<TableCell className="text-center">
+																{(() => {
+																	const value =
+																		stock.marketCap;
+																	if (
+																		value >=
+																		1000000000000
+																	) {
+																		return `${(
+																			value /
+																			1000000000000
+																		).toFixed(
+																			1
+																		)}T$`;
+																	} else if (
+																		value >=
+																		1000000000
+																	) {
+																		return `${(
+																			value /
+																			1000000000
+																		).toFixed(
+																			1
+																		)}B$`;
+																	} else {
+																		return `${(
+																			value /
+																			1000000
+																		).toFixed(
+																			1
+																		)}M$`;
+																	}
+																})()}
+															</TableCell>
+															<TableCell className="text-center">
+																$
+																{stock.price.toFixed(
+																	2
+																)}
+															</TableCell>
+															<TableCell className="text-center">
+																$
+																{stock.graham_props.intrinsic_value.toFixed(
+																	2
+																)}
+															</TableCell>
+															<TableCell className="text-center">
+																{(() => {
+																	const valuation =
+																		calculateValuation(
+																			stock
+																		);
+																	return (
+																		<span
+																			className={
+																				valuation.isUndervalued
+																					? 'text-green-600 font-medium'
+																					: 'text-red-600 font-medium'
+																			}>
+																			{
+																				valuation.text
+																			}
+																		</span>
+																	);
+																})()}
+															</TableCell>
+															<TableCell className="text-center">
 																{stock.pe.toFixed(
-																	2
-																)}
-															</TableCell>
-															<TableCell className="text-center">
-																{stock.graham_props.book_value.toFixed(
-																	2
-																)}
-															</TableCell>
-															<TableCell className="text-center">
-																{stock.graham_props.current_ratio.toFixed(
-																	2
-																)}
-															</TableCell>
-															<TableCell className="text-center">
-																{stock.graham_props.debt_to_equity.toFixed(
 																	2
 																)}
 															</TableCell>
@@ -850,7 +970,7 @@ const StockScreenerSection = ({ stocks }: { stocks: Stock[] }) => {
 														) && (
 															<TableRow className="bg-gray-50">
 																<TableCell
-																	colSpan={7}
+																	colSpan={8}
 																	className="p-4">
 																	<p className="text-sm text-gray-600">
 																		{

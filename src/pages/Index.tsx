@@ -7,7 +7,7 @@ import Footer from '@/components/Footer';
 import MobileAdPopup from '@/components/ads/MobileAdPopup';
 import DesktopSideAds from '@/components/ads/DesktopSideAds';
 import { useEffect, useState } from 'react';
-import { getStocksWithLimit } from '@/lib/api';
+import { getStocks } from '@/lib/api';
 import FormulasExplained from '@/components/FormulasExplained';
 
 const Index = () => {
@@ -17,7 +17,7 @@ const Index = () => {
 	useEffect(() => {
 		const fetchStocks = async () => {
 			try {
-				const response = await getStocksWithLimit(1500);
+				const response = await getStocks();
 				setStocks(response.data);
 			} catch (error) {
 				console.error('Error fetching stocks:', error);

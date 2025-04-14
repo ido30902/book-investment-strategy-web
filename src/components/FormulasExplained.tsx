@@ -46,6 +46,17 @@ const FormulasExplained = () => {
 								alt="Benjamin Graham"
 								className="w-64 h-64 rounded-full object-cover mx-auto"
 							/>
+							<div className="text-center mt-4">
+								<p className="text-sm text-gray-600">
+									Benjamin Graham (1894-1976)
+								</p>
+								<p className="text-sm text-gray-600">
+									Father of Value Investing
+								</p>
+								<p className="text-sm text-gray-600">
+									Author of "The Intelligent Investor"
+								</p>
+							</div>
 						</div>
 					</div>
 
@@ -57,6 +68,18 @@ const FormulasExplained = () => {
 								alt="Joel Greenblatt"
 								className="w-64 h-64 rounded-full object-cover mx-auto"
 							/>
+							<div className="text-center mt-4">
+								<p className="text-sm text-gray-600">
+									Joel Greenblatt
+								</p>
+								<p className="text-sm text-gray-600">
+									Founder of Magic Formula Investing
+								</p>
+								<p className="text-sm text-gray-600">
+									Author of "The Little Book That Beats the
+									Market"
+								</p>
+							</div>
 						</div>
 						<div className="w-full md:w-3/5">
 							<h3 className="text-2xl font-semibold mb-10">
@@ -67,7 +90,7 @@ const FormulasExplained = () => {
 								Capital
 							</div>
 							<div className="space-y-6">
-								<div className="text-m md:text-2xl -skew-x-6 text-gray-700">
+								<div className="text-m md:text-2xl-skew-x-6 text-gray-700">
 									Where: Earnings Yield = EBIT / Enterprise
 									Value, Return on Capital = EBIT / (Net
 									Working Capital + Net Fixed Assets)
