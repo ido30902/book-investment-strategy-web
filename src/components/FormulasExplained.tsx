@@ -23,10 +23,10 @@ const FormulasExplained = () => {
 									formulas over next 7-10 years, EPS =
 									trailing 12-month earnings per share, 8.5 =
 									P/E base for a no-growth company, g =
-									expected 7-10 year growth rate of EPS, 4.4 =
-									average yield of AAA corporate bonds in
-									1962, Y = current yield on AAA corporate
-									bonds
+									expected 7-10 year growth rate of EPS (We
+									use 7% growth rate), 4.4 = average yield of
+									AAA corporate bonds in 1962, Y = current
+									yield on AAA corporate bonds
 								</div>
 								<div className="text-m md:text-2xl-skew-x-6 text-gray-700">
 									This formula provides a fundamental approach
@@ -91,9 +91,9 @@ const FormulasExplained = () => {
 							</div>
 							<div className="space-y-6">
 								<div className="text-m md:text-2xl-skew-x-6 text-gray-700">
-									Where: Earnings Yield = EBIT / Enterprise
-									Value, Return on Capital = EBIT / (Net
-									Working Capital + Net Fixed Assets)
+									Where: Earnings Yield = EPS / Stock Price,
+									Return on Capital = EBIT / (Net Working
+									Capital + Net Fixed Assets)
 								</div>
 								<div className="text-m md:text-2xl-skew-x-6 text-gray-700">
 									The Magic Formula combines two key metrics

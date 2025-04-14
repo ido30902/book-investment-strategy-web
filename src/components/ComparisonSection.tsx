@@ -382,7 +382,7 @@ const ComparisonSection = () => {
 										}
 										contentStyle={{
 											fontWeight: 'bold',
-											textAlign: 'center'
+											textAlign: 'center',
 										}}
 									/>
 									<Legend />
@@ -390,7 +390,7 @@ const ComparisonSection = () => {
 										type="monotone"
 										name="S&P 500 Index"
 										dataKey="s_and_p_500"
-										stroke="#8884d8"
+										stroke="#F6511D"
 										activeDot={{ r: 8 }}
 										strokeWidth={2}
 									/>

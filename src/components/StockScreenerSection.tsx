@@ -991,7 +991,8 @@ const StockScreenerSection = ({ stocks }: { stocks: Stock[] }) => {
 					</TabsContent>
 				</Tabs>
 				<div className="mt-8 text-sm text-gray-500 italic text-center md:text-left">
-					*Data updates once a week
+					*Data updates once a week | **Data is provided by Yahoo
+					Finance
 				</div>
 			</div>
 		</section>
