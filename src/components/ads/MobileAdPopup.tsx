@@ -17,7 +17,7 @@ const MobileAdPopup = () => {
 	useEffect(() => {
 		const script = document.createElement('script');
 		script.src =
-			'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX';
+			'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8429293774791012';
 		script.async = true;
 		script.crossOrigin = 'anonymous';
 		document.head.appendChild(script);
@@ -62,8 +62,7 @@ const MobileAdPopup = () => {
 				<ins
 					className="adsbygoogle"
 					style={{ display: 'block', width: '100%', height: '100%' }}
-					data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
-					data-ad-slot="XXXXXXXXXX"
+					data-ad-client="ca-pub-8429293774791012"
 					data-ad-format="auto"
 					data-full-width-responsive="true"
 				/>

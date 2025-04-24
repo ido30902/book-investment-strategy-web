@@ -51,9 +51,9 @@ const Index = () => {
 				{isMobile ? <MobileAdPopup /> : <DesktopSideAds />}
 				<HeroSection />
 				<BooksSection />
+				<StockScreenerSection stocks={stocks} />
 				<ComparisonSection />
 				<FormulasExplained />
-				<StockScreenerSection stocks={stocks} />
 			</main>
 			<Footer />
 		</div>

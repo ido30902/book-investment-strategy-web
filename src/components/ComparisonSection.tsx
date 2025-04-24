@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-	LineChart,
-	Line,
 	XAxis,
 	YAxis,
 	Tooltip,
 	Legend,
 	ResponsiveContainer,
+	AreaChart,
+	Area,
 } from 'recharts';
 
 const ComparisonSection = () => {
@@ -306,7 +306,7 @@ const ComparisonSection = () => {
 
 						<div className="w-full h-[250px] md:h-[400px]">
 							<ResponsiveContainer width="100%" height="100%">
-								<LineChart
+								<AreaChart
 									data={jsonData}
 									margin={{
 										top: 5,
@@ -345,37 +345,58 @@ const ComparisonSection = () => {
 										scale={'linear'}
 									/>
 									<Tooltip
-										formatter={(value: number) => {
+										formatter={(
+											value: number,
+											name: string
+										) => {
+											const color =
+												name === 'S&P 500 Index'
+													? '#F6511D'
+													: name ===
+													  'Magic Formula by Joel Greenblatt'
+													? '#1a56db'
+													: '#10b981';
+
 											if (value >= 1000000000000) {
 												return [
-													`$${(
+													<span
+														style={{ color }}>{`$${(
 														value / 1000000000000
-													).toFixed(1)}T`,
+													).toFixed(1)}T`}</span>,
 													undefined,
 												];
 											} else if (value >= 1000000000) {
 												return [
-													`$${(
+													<span
+														style={{ color }}>{`$${(
 														value / 1000000000
-													).toFixed(1)}B`,
+													).toFixed(1)}B`}</span>,
 													undefined,
 												];
 											} else if (value >= 1000000) {
 												return [
-													`$${(
+													<span
+														style={{ color }}>{`$${(
 														value / 1000000
-													).toFixed(1)}M`,
+													).toFixed(1)}M`}</span>,
 													undefined,
 												];
 											} else if (value >= 1000) {
 												return [
-													`$${(value / 1000).toFixed(
-														1
-													)}K`,
+													<span
+														style={{ color }}>{`$${(
+														value / 1000
+													).toFixed(1)}K`}</span>,
 													undefined,
 												];
 											}
-											return [`$${value}`, undefined];
+											return [
+												<span
+													style={{
+														color,
+													}}>{`$${value}`}</span>,
+												undefined,
+											];
 										}}
 										labelFormatter={(label) =>
 											`Year: ${label}`
@@ -386,31 +407,36 @@ const ComparisonSection = () => {
 										}}
 									/>
 									<Legend />
-									<Line
-										type="monotone"
-										name="S&P 500 Index"
-										dataKey="s_and_p_500"
-										stroke="#F6511D"
-										activeDot={{ r: 8 }}
-										strokeWidth={2}
-									/>
-									<Line
+
+									<Area
 										type="monotone"
 										name="Magic Formula by Joel Greenblatt"
 										dataKey="joel_greenblatt_magic_formula"
+										fill="#1a56db"
 										stroke="#1a56db"
-										activeDot={{ r: 8 }}
-										strokeWidth={2}
+										stackId={'magic_formula'}
+										fillOpacity={0.8}
 									/>
-									<Line
+
+									<Area
 										type="monotone"
 										name="Benjamin Graham Strategy"
 										dataKey="benjamin_graham_strategy"
+										fill="#10b981"
 										stroke="#10b981"
-										activeDot={{ r: 8 }}
-										strokeWidth={2}
+										stackId={'benjamin_graham_strategy'}
+										fillOpacity={0.8}
 									/>
-								</LineChart>
+									<Area
+										type="monotone"
+										name="S&P 500 Index"
+										dataKey="s_and_p_500"
+										fill="#F6511D"
+										stroke="#F6511D"
+										fillOpacity={0.8}
+										stackId={'sp500'}
+									/>
+								</AreaChart>
 							</ResponsiveContainer>
 						</div>
 

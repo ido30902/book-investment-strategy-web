@@ -8,6 +8,7 @@ export interface Stock {
 	description: string;
 	logo_url: string;
 	sector: string;
+	website: string;
 	graham_props: {
 		graham_score: number;
 		current_ratio: number;

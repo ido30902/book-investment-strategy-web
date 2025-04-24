@@ -16,10 +16,10 @@ const Header = () => {
 	}, []);
 
 	const navLinks = [
-		{ name: 'Home', href: '#home' },
-		{ name: 'Books', href: '#books' },
-		{ name: 'Comparison', href: '#comparison' },
-		{ name: 'Screener', href: '#screener' },
+		{ name: 'Home', href: '/#home' },
+		{ name: 'Books', href: '/#books' },
+		{ name: 'Comparison', href: '/#comparison' },
+		{ name: 'Screener', href: '/#screener' },
 	];
 
 	return (
@@ -33,9 +33,7 @@ const Header = () => {
 				<div className="flex items-center justify-between">
 					<a href="#home" className="flex items-center md:flex-none">
 						<div className="text-investment-blue font-bold text-2xl md:text-left text-center w-full md:w-auto">
-							Investment{' '}
-							<span className="text-investment-green">Book</span>{' '}
-							Strategies
+							Investment <span className="">Book</span> Strategies
 						</div>
 					</a>
 
@@ -45,7 +43,7 @@ const Header = () => {
 							<a
 								key={link.name}
 								href={link.href}
-								className="text-gray-700 hover:text-investment-blue transition-colors font-medium">
+								className="text-investment-blue hover:text-investment-blue transition-colors font-medium">
 								{link.name}
 							</a>
 						))}

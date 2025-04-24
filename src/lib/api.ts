@@ -1,9 +1,9 @@
 import axios from 'axios';
 
-const url = 'http://192.168.1.35:4000/api/stocks';
+const url = 'https://investmentbookstrategy.com/api/stocks';
+
 const headers = {
 	'Content-Type': 'application/json',
-	'Access-Control-Allow-Origin': '*',
 };
 
 export const getStocks = async () => {
@@ -47,6 +47,18 @@ export const getTopGrahamStocks = async (limit: number) => {
 		return response.data;
 	} catch (error) {
 		console.error('Error fetching top graham stocks:', error);
+		throw error;
+	}
+};
+
+export const getStockBySymbol = async (symbol: string) => {
+	try {
+		const response = await axios.get(`${url}/${symbol}`, {
+			headers,
+		});
+		return response.data;
+	} catch (error) {
+		console.error(`Error fetching stock ${symbol}:`, error);
 		throw error;
 	}
 };
