@@ -2,7 +2,7 @@ const FormulasExplained = () => {
 	return (
 		<section id="formulas" className="py-20 bg-white">
 			<div className="container mx-auto px-4">
-				<h2 className="text-3xl md:text-4xl font-bold text-investment-blue mb-12 text-center">
+				<h2 className="text-3xl md:text-4xl font-bold text-blue-800 mb-12 text-center">
 					Formulas Explained
 				</h2>
 				<div className="space-y-16">
@@ -83,6 +83,7 @@ const FormulasExplained = () => {
 						</div>
 						<div className="hidden md:block w-2/5">
 							<img
+								title="Benjamin Graham"
 								src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Benjamin_Graham_%281894-1976%29_portrait_on_23_March_1950.jpg"
 								alt="Benjamin Graham"
 								className="w-64 h-64 rounded-full object-cover mx-auto"
@@ -108,6 +109,7 @@ const FormulasExplained = () => {
 					<div className="flex flex-col md:flex-row items-center gap-16">
 						<div className="hidden md:block w-2/5">
 							<img
+								title="Joel Greenblatt"
 								src="https://www.valueresearchonline.com/content-assets/images/35739_joel-greenblatt__w660__.jpg"
 								alt="Joel Greenblatt"
 								className="w-64 h-64 rounded-full object-cover mx-auto"

@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
 	XAxis,
@@ -287,11 +286,11 @@ const ComparisonSection = () => {
 	return (
 		<section id="comparison" className="py-20">
 			<div className="container mx-auto px-4">
-				<h2 className="text-3xl md:text-4xl font-bold text-investment-blue mb-12 text-center">
+				<h2 className="text-3xl md:text-4xl font-bold text-blue-800 mb-12 text-center">
 					Strategy Performance Comparison
 				</h2>
 
-				<Card className="shadow-lg">
+				<Card className="shadow-xl bg-white/80 backdrop-blur-sm border border-gray-100">
 					<CardHeader>
 						<CardTitle className="text-2xl text-center">
 							60-Year Historical Performance Comparison

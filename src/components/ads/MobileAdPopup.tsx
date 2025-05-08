@@ -36,9 +36,9 @@ const MobileAdPopup = () => {
 	useEffect(() => {
 		if (showAd && typeof window !== 'undefined') {
 			try {
-				(window.adsbygoogle = window.adsbygoogle || []).forEach((ad) =>
-					ad.push({})
-				);
+				// Add proper TypeScript definition for adsbygoogle
+				(window as any).adsbygoogle = (window as any).adsbygoogle || [];
+				(window as any).adsbygoogle.push({});
 			} catch (e) {
 				console.error('Error initializing Google ad:', e);
 			}
@@ -65,6 +65,7 @@ const MobileAdPopup = () => {
 					data-ad-client="ca-pub-8429293774791012"
 					data-ad-format="auto"
 					data-full-width-responsive="true"
+					data-ad-slot="mobile-popup"
 				/>
 			</div>
 		</div>

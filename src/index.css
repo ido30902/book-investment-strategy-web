@@ -1,8 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Rubik:wght@400;500;600;700&display=swap');
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
 @layer base {
 	:root {
@@ -35,6 +32,11 @@
 		--ring: 222.2 84% 4.9%;
 
 		--radius: 0.5rem;
+
+		--investment-blue: #2563eb;
+		--investment-blue-dark: #1e40af;
+
+		--investment-green: 160 84% 39%;
 
 		--sidebar-background: 0 0% 98%;
 		--sidebar-foreground: 240 5.3% 26.1%;
@@ -87,11 +89,11 @@
 
 @layer base {
 	* {
-		@apply border-border;
+		@apply border-[var(--border)];
 	}
 
 	body {
-		@apply bg-background text-foreground;
+		@apply bg-[var(--background)] text-[var(--foreground)];
 		font-feature-settings: 'rlig' 1, 'calt' 1;
 		font-family: 'Poppins', sans-serif;
 	}
@@ -118,4 +120,3 @@
 	-ms-overflow-style: none; /* IE and Edge */
 	scrollbar-width: none; /* Firefox */
 }
-

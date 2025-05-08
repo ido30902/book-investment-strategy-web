@@ -24,3 +24,17 @@ export interface Stock {
 		magic_formula_rank: number;
 	};
 }
+
+export const STOCK_SECTORS = [
+	'Technology',
+	'Healthcare',
+	'Financial Services',
+	'Consumer Cyclical',
+	'Communication Services',
+	'Industrials',
+	'Consumer Defensive',
+	'Energy',
+	'Basic Materials',
+	'Real Estate',
+	'Utilities'
+] as const;

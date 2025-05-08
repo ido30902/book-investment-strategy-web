@@ -5,7 +5,7 @@ const DesktopSideAds = () => {
 	useEffect(() => {
 		const script = document.createElement('script');
 		script.src =
-			'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX';
+			'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8429293774791012';
 		script.async = true;
 		script.crossOrigin = 'anonymous';
 		document.head.appendChild(script);
@@ -24,9 +24,9 @@ const DesktopSideAds = () => {
 	useEffect(() => {
 		if (typeof window !== 'undefined') {
 			try {
-				(window.adsbygoogle = window.adsbygoogle || []).forEach((ad) =>
-					ad.push({})
-				);
+				// Add proper TypeScript definition for adsbygoogle
+				(window as any).adsbygoogle = (window as any).adsbygoogle || [];
+				(window as any).adsbygoogle.push({});
 			} catch (e) {
 				console.error('Error initializing Google ads:', e);
 			}
@@ -49,8 +49,8 @@ const DesktopSideAds = () => {
 								width: '160px',
 								height: '600px',
 							}}
-							data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
-							data-ad-slot="XXXXXXXXXX"
+							data-ad-client="ca-pub-8429293774791012"
+							data-ad-slot="left-sidebar"
 						/>
 					</div>
 				</div>
@@ -70,8 +70,8 @@ const DesktopSideAds = () => {
 								width: '160px',
 								height: '600px',
 							}}
-							data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
-							data-ad-slot="XXXXXXXXXX"
+							data-ad-client="ca-pub-8429293774791012"
+							data-ad-slot="right-sidebar"
 						/>
 					</div>
 				</div>
